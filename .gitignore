@@ -1,0 +1,58 @@
+
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Virtual environments
+.venv/
+venv/
+ENV/
+env/
+
+# VS Code
+.vscode/
+
+# Windows
+Thumbs.db
+Desktop.ini
+
+# Logs
+*.log
+
+# Temp files
+*.tmp
+*.temp
+
+# PyInstaller / build artifacts
+build/
+dist/
+*.spec
+
+# Testing
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Local config (DO NOT COMMIT)
+config.ini
+user_state.ini
+*.local.ini
+
+# Environment variables
+.env
+.env.*
+
+# Input / Output data
+*.pdf
+*.csv
+*.txt
+output/
+
+#Logs
+logs/
+*.log
+
+#Claude Code
+src/kifikos_report.egg-info/
+.claude/
+.mcp.json
