@@ -26,7 +26,7 @@ Loaded once at startup by `config.py` from `.env`. Immutable.
 | `lookback_hours` | `int` | no | `24` | `LOOKBACK_HOURS` | must be `> 0` — else fatal config error (FR-004) |
 | `log_level` | `str` | no | `"INFO"` | `LOG_LEVEL` | `DEBUG` or `INFO` |
 | `anthropic_model` | `str` | no | `"claude-sonnet-4-6"` | `ANTHROPIC_MODEL` | same model for per-chat + overall (FR-003) |
-| `session_path` | `pathlib.Path` | derived | `./telegram.session` | — | not directly a config var, but captured by `Config` for uniform access |
+| `session_path` | `pathlib.Path` | derived | `./telegram.session` | — | fixed; NOT read from `.env`; `Config.load()` always sets it to `pathlib.Path("telegram.session")` resolved against the current working directory. Rationale: per Constitution Technical Constraints the session file path is a deployment detail, not a tunable. Listed here only so downstream modules consume it uniformly via `config.session_path`. |
 
 **Validation rules (fail-fast at startup, FR-004):**
 - Every required field must be present and non-empty.

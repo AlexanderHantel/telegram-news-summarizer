@@ -115,9 +115,13 @@ length, tone, or emphasis) without any Python file having been modified.
    reflects the updated prompt with no code change required.
 2. **Given** a required prompt file is missing at runtime, **When** the tool
    attempts to use it, **Then** the tool reports a clear error naming the
-   missing file (and either aborts that chat's summarization with graceful
-   failure or aborts the whole run with a clear message, depending on
-   whether it is a per-chat prompt or the overall prompt).
+   missing file. If the missing file is the per-chat prompt
+   (`prompts/chat_summary.md`), that chat is aborted via the Graceful
+   Failure path (User Story 2) and remaining chats still succeed. If the
+   missing file is the overall prompt (`prompts/overall_summary.md`), the
+   tool still delivers every per-chat summary collected so far, logs the
+   missing overall prompt with its path, and then exits with a non-zero
+   status; no overall summary is delivered.
 
 ---
 
@@ -160,7 +164,9 @@ detached shell). Verify it completes without prompting.
 - A topic-chat contains only non-text content (media without captions,
   stickers, service messages). Expected: the summary reflects that the chat
   had activity of that nature, rather than returning an empty or misleading
-  summary.
+  summary. The per-chat prompt MUST therefore instruct Claude explicitly
+  that empty message bodies represent media or service activity and
+  should be acknowledged as such in the Russian summary.
 - The target group switches between forum mode (topics) and non-forum mode
   between runs. Both modes must continue to work without manual
   reconfiguration.
@@ -177,8 +183,13 @@ detached shell). Verify it completes without prompting.
   exception, that chat (or the whole read step) is reported as a failure;
   the tool does not introduce its own retry loop on top of Telethon.
 - The delivery bot is blocked by the operator, deleted, or its token has
-  been revoked. Expected: the failure is recorded in the log file with full
-  context, even if it cannot reach the operator.
+  been revoked. Expected: every delivery attempt is wrapped in its own
+  error boundary so one failing `sendMessage` call does not prevent
+  subsequent delivery attempts. Every delivery failure is recorded in the
+  log file with full context (HTTP status, response body). If at least
+  one delivery failed during the run, the tool MUST exit with a non-zero
+  status at the end so Task Scheduler registers the run as failed, even
+  when later deliveries succeeded.
 - A message body from the source group contains characters that could be
   misinterpreted by Telegram's message formatting. The delivered summary
   must not crash on special characters or inadvertently change formatting.
@@ -282,12 +293,19 @@ detached shell). Verify it completes without prompting.
   verbatim.
 - **FR-019**: The tool MUST deliver messages sequentially in a predictable
   order (per-chat summaries first, in a stable order; overall summary
-  last).
+  last). The stable order across runs MUST be the ascending Telegram
+  topic ID (or, for non-forum groups, the single chat). The chat display
+  name MAY change between runs without affecting delivery order.
 - **FR-020**: The tool MUST log each delivery attempt, including the target
   chat, the message size, and the outcome (success or error).
 - **FR-021**: If any per-chat summarization failed during the run, the tool
   MUST include a clearly labeled error section in the delivered output
-  listing each failed chat and the reason for its failure.
+  listing each failed chat and the reason for its failure. The section
+  header and the per-entry prefixes MUST be written in Russian to match
+  the reading context of the operator, consistent with FR-015 and
+  FR-021a. The failure reason itself (exception message, missing file
+  path, HTTP status) MAY remain in its original English form because it
+  originates from SDKs and the filesystem and is used for diagnosis.
 - **FR-021a**: If zero messages were collected across all topic-chats in
   the lookback window, the tool MUST still deliver exactly one bot message
   to the operator — a short Russian "no new activity" notice — so that

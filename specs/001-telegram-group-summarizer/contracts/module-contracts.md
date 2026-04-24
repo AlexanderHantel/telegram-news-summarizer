@@ -27,7 +27,7 @@ class Config:
     lookback_hours: int            # default 24; must be > 0
     log_level: str                 # "DEBUG" or "INFO"; default "INFO"
     anthropic_model: str           # default "claude-sonnet-4-6"
-    session_path: pathlib.Path     # derived; default ./telegram.session
+    session_path: pathlib.Path     # fixed default ./telegram.session (not read from .env)
 
 
 def load_config() -> Config:
@@ -154,14 +154,23 @@ def summarize_chat(chat_name: str,
 
 
 def summarize_overall(chat_summaries: list[tuple[str, str]],
+                      overall_template: str,
                       config: Config) -> str:
     """
     `chat_summaries` is a list of (chat_name, summary_text) pairs.
+    `overall_template` is the pre-loaded Markdown template content
+    (the operator of this function does NOT load prompts/overall_summary.md —
+    that must be done by main.py so that FileNotFoundError on the overall
+    prompt surfaces as a whole-run abort, not as a graceful per-chat
+    failure; see tasks.md T022 and spec.md User Story 3 Acceptance
+    Scenario 2).
 
-    Loads prompts/overall_summary.md, fills {{summaries}}, calls
-    Claude. Returns the Russian-language overall summary text.
+    Fills {{summaries}} in `overall_template` and calls Claude via the
+    anthropic SDK with config.anthropic_model in a single request.
+    Returns the Russian-language overall summary text.
 
-    Raises on unrecoverable failure — handled by main.py.
+    Raises anthropic.* on unrecoverable Claude failure — caught by the
+    T021 try/except in main.py as a regular graceful failure.
     Logs: input summary count, response character length.
     """
 ```
