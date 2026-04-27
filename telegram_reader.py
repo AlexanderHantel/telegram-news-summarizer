@@ -8,6 +8,7 @@ custom retry loop is layered on top (plan.md Phase 0 Decision 1, FR-026b).
 
 from __future__ import annotations
 
+import asyncio
 from dataclasses import dataclass
 from datetime import datetime, timedelta, timezone
 from typing import TYPE_CHECKING, Any, Sequence
@@ -235,13 +236,12 @@ def get_messages(config: Config) -> dict[str, list[Message]]:
         config.session_path,
     )
 
-    telegram_client = TelegramClient(
-        session=str(config.session_path),
-        api_id=config.telegram_api_id,
-        api_hash=config.telegram_api_hash,
-    )
-
     async def _run() -> dict[str, list[Message]]:
+        telegram_client = TelegramClient(
+            session=str(config.session_path),
+            api_id=config.telegram_api_id,
+            api_hash=config.telegram_api_hash,
+        )
         await telegram_client.start(phone=config.telegram_phone)
         try:
             group_entity: Any = await telegram_client.get_entity(
@@ -284,4 +284,4 @@ def get_messages(config: Config) -> dict[str, list[Message]]:
         finally:
             await telegram_client.disconnect()
 
-    return telegram_client.loop.run_until_complete(_run())
+    return asyncio.run(_run())
