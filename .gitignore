@@ -42,6 +42,10 @@ user_state.ini
 .env
 .env.*
 
+# Telethon session files (MTProto auth tokens)
+*.session
+*.session-journal
+
 # Input / Output data
 *.pdf
 *.csv
