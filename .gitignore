@@ -49,7 +49,6 @@ user_state.ini
 # Input / Output data
 *.pdf
 *.csv
-*.txt
 output/
 
 #Logs
