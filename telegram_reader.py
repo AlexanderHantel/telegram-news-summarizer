@@ -244,6 +244,11 @@ def get_messages(config: Config) -> dict[str, list[Message]]:
         )
         await telegram_client.start(phone=config.telegram_phone)
         try:
+            # Befüllt den Entity-Cache der Session, damit get_entity per
+            # Anzeigename (Titel) eine Gruppe finden kann. Telethon löst
+            # Display-Namen nur über bereits gecachte Dialoge auf.
+            liste_der_dialoge = await telegram_client.get_dialogs()
+            logger.debug("Dialog-Cache befüllt: %d Einträge", len(liste_der_dialoge))
             group_entity: Any = await telegram_client.get_entity(
                 config.telegram_group_name
             )
