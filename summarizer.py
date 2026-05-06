@@ -71,8 +71,9 @@ def _invoke_claude(anthropic_client: Anthropic, model_id: str, prompt_text: str)
     )
     response_fragments: list[str] = []
     for content_block in response.content:
-        if getattr(content_block, "type", None) == "text":
-            response_fragments.append(content_block.text)
+        text_value = getattr(content_block, "text", None)
+        if isinstance(text_value, str):
+            response_fragments.append(text_value)
     return "".join(response_fragments).strip()
 
 

@@ -90,10 +90,11 @@ async def _collect_topic_buckets(
     telegram_client: TelegramClient,
     group_entity: Any,
     window_start_utc: datetime,
+    excluded_topic_ids: tuple[int, ...],
     logger: Any,
 ) -> dict[str, list[Message]]:
     """Return a dict keyed by forum topic title in ascending topic-id order."""
-    topics_response = await telegram_client(
+    topics_response: Any = await telegram_client(
         functions.channels.GetForumTopicsRequest(
             channel=group_entity,
             offset_date=None,
@@ -115,6 +116,22 @@ async def _collect_topic_buckets(
         len(topic_entries),
         getattr(group_entity, "title", "<unknown>"),
     )
+
+    excluded_ids_set = set(excluded_topic_ids)
+    if excluded_ids_set:
+        topic_entries_before_filter = topic_entries
+        topic_entries = [
+            topic
+            for topic in topic_entries_before_filter
+            if topic.id not in excluded_ids_set
+        ]
+        skipped_count = len(topic_entries_before_filter) - len(topic_entries)
+        if skipped_count:
+            logger.info(
+                "Excluded %d forum topic(s) by EXCLUDED_TOPIC_IDS: %s",
+                skipped_count,
+                sorted(excluded_ids_set),
+            )
 
     topic_buckets: dict[str, list[Message]] = {}
     for topic_entry in topic_entries:
@@ -242,7 +259,7 @@ def get_messages(config: Config) -> dict[str, list[Message]]:
             api_id=config.telegram_api_id,
             api_hash=config.telegram_api_hash,
         )
-        await telegram_client.start(phone=config.telegram_phone)
+        await telegram_client.start(phone=config.telegram_phone)  # pyright: ignore[reportGeneralTypeIssues]
         try:
             # Befüllt den Entity-Cache der Session, damit get_entity per
             # Anzeigename (Titel) eine Gruppe finden kann. Telethon löst
@@ -269,6 +286,7 @@ def get_messages(config: Config) -> dict[str, list[Message]]:
                     telegram_client=telegram_client,
                     group_entity=group_entity,
                     window_start_utc=window_start_utc,
+                    excluded_topic_ids=config.excluded_topic_ids,
                     logger=logger,
                 )
 
@@ -287,6 +305,6 @@ def get_messages(config: Config) -> dict[str, list[Message]]:
             )
             return {bucket_key: plain_group_messages}
         finally:
-            await telegram_client.disconnect()
+            await telegram_client.disconnect()  # pyright: ignore[reportGeneralTypeIssues]
 
     return asyncio.run(_run())

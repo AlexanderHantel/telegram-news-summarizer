@@ -41,7 +41,11 @@ def send_message(text: str, config: "Config") -> None:
     )
     response = requests.post(
         endpoint_url,
-        data={"chat_id": config.telegram_chat_id, "text": text},
+        data={
+            "chat_id": config.telegram_chat_id,
+            "text": text,
+            "parse_mode": "HTML",
+        },
         timeout=_REQUEST_TIMEOUT_SECONDS,
     )
     logger.info(

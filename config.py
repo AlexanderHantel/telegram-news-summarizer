@@ -42,6 +42,7 @@ class Config:
     lookback_hours: int
     log_level: str
     anthropic_model: str
+    excluded_topic_ids: tuple[int, ...]
     session_path: Path
 
 
@@ -91,6 +92,28 @@ def _read_optional_string(
     return raw_value if raw_value else default_value
 
 
+def _read_optional_integer_list(
+    environment: dict[str, str],
+    variable_name: str,
+) -> tuple[int, ...]:
+    raw_value = environment.get(variable_name, "").strip()
+    if not raw_value:
+        return ()
+    parsed_values: list[int] = []
+    for raw_token in raw_value.split(","):
+        token = raw_token.strip()
+        if not token:
+            continue
+        try:
+            parsed_values.append(int(token))
+        except ValueError as conversion_error:
+            raise _ConfigError(
+                f"Environment variable {variable_name} must be a "
+                "comma-separated list of integers"
+            ) from conversion_error
+    return tuple(parsed_values)
+
+
 def load_config() -> Config:
     """Load ``.env``, validate every variable, return a frozen :class:`Config`.
 
@@ -131,6 +154,10 @@ def load_config() -> Config:
         anthropic_model = _read_optional_string(
             environment, "ANTHROPIC_MODEL", _DEFAULT_ANTHROPIC_MODEL
         )
+
+        excluded_topic_ids = _read_optional_integer_list(
+            environment, "EXCLUDED_TOPIC_IDS"
+        )
     except _ConfigError as validation_error:
         logger.error(str(validation_error))
         sys.exit(1)
@@ -146,5 +173,6 @@ def load_config() -> Config:
         lookback_hours=lookback_hours,
         log_level=log_level,
         anthropic_model=anthropic_model,
+        excluded_topic_ids=excluded_topic_ids,
         session_path=_FIXED_SESSION_PATH,
     )
