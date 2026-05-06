@@ -32,8 +32,13 @@ def test_fill_prompt_leaves_unresolved_token_in_place_and_warns(
 ) -> None:
     template = "chat={{chat_name}}; unknown={{unknown_token}}"
 
-    with caplog.at_level(logging.WARNING, logger="summarizer"):
-        rendered_output = fill_prompt(template, chat_name="General")
+    summarizer_logger = logging.getLogger("telegram_summarizer.summarizer")
+    summarizer_logger.addHandler(caplog.handler)
+    try:
+        with caplog.at_level(logging.WARNING, logger="telegram_summarizer.summarizer"):
+            rendered_output = fill_prompt(template, chat_name="General")
+    finally:
+        summarizer_logger.removeHandler(caplog.handler)
 
     assert rendered_output == "chat=General; unknown={{unknown_token}}"
     warning_records = [
