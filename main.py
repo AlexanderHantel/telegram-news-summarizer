@@ -23,6 +23,7 @@ from telethon.errors import (
 from bot_sender import send_long_message
 from config import load_config
 from logger import get_logger
+from markdown_zu_html import konvertiere_markdown_zu_telegram_html
 from summarizer import load_prompt, summarize_chat, summarize_overall
 from telegram_reader import get_messages
 
@@ -66,9 +67,16 @@ def _safe_deliver(
     ``delivery_failure_box`` is a mutable single-element list used as an
     out-parameter so that the caller can raise a non-zero exit code once any
     delivery has failed (spec §Edge Cases bot blocked/revoked, FR-020).
+
+    The payload is run through :func:`konvertiere_markdown_zu_telegram_html`
+    before sending so that the LLM-Markdown subset is rendered as Telegram
+    HTML and any ``<``/``>``/``&`` in plain-text payloads (heartbeat,
+    failures section) is safely escaped — required because
+    ``bot_sender.send_message`` posts with ``parse_mode=HTML``.
     """
+    html_payload_text = konvertiere_markdown_zu_telegram_html(payload_text)
     try:
-        send_long_message(payload_text, config)
+        send_long_message(html_payload_text, config)
     except (requests.HTTPError, Exception) as delivery_error:  # noqa: BLE001
         logger.exception(
             "Bot delivery failed for '%s' (chars=%d): %r",
@@ -94,7 +102,10 @@ def _handle_authentication_revocation(
         original_error,
     )
     try:
-        send_long_message(_AUTH_REVOKED_NOTICE_RUSSIAN, config)
+        send_long_message(
+            konvertiere_markdown_zu_telegram_html(_AUTH_REVOKED_NOTICE_RUSSIAN),
+            config,
+        )
     except Exception as delivery_error:  # noqa: BLE001
         logger.exception(
             "Could not deliver auth-revoked notice to bot DM: %r", delivery_error
