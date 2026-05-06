@@ -1,1 +1,2 @@
 ﻿2026-05-06 10:31 - Logger-Modul gemaess Rule umgeschrieben: RotatingFileHandler (2MB, 10 Backups, append-only), benannter Projekt-Logger statt Root-Logger, idempotente Einrichtung, Pfad-Variante A neben dem Programm. Test mit altem Logger-Namen angepasst. Alle 13 Tests gruen, Ruff und Pyright sauber.
+2026-05-06 11:38 - Problem: Telegram rendert das Markdown der Digests (Überschriften, **fett**, Links) nicht sauber. Lösung: Umstellung auf parse_mode=HTML im bot_sender mit <b> für fett und <a href> für klickbare Links. Prompts angepasst, Commit feat(formatting) erstellt.
