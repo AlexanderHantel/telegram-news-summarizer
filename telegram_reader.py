@@ -93,7 +93,7 @@ async def _collect_topic_buckets(
     logger: Any,
 ) -> dict[str, list[Message]]:
     """Return a dict keyed by forum topic title in ascending topic-id order."""
-    topics_response = await telegram_client(
+    topics_response: Any = await telegram_client(
         functions.channels.GetForumTopicsRequest(
             channel=group_entity,
             offset_date=None,
@@ -242,7 +242,7 @@ def get_messages(config: Config) -> dict[str, list[Message]]:
             api_id=config.telegram_api_id,
             api_hash=config.telegram_api_hash,
         )
-        await telegram_client.start(phone=config.telegram_phone)
+        await telegram_client.start(phone=config.telegram_phone)  # pyright: ignore[reportGeneralTypeIssues]
         try:
             # Befüllt den Entity-Cache der Session, damit get_entity per
             # Anzeigename (Titel) eine Gruppe finden kann. Telethon löst
@@ -287,6 +287,6 @@ def get_messages(config: Config) -> dict[str, list[Message]]:
             )
             return {bucket_key: plain_group_messages}
         finally:
-            await telegram_client.disconnect()
+            await telegram_client.disconnect()  # pyright: ignore[reportGeneralTypeIssues]
 
     return asyncio.run(_run())
