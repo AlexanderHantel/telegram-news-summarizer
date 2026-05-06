@@ -1,0 +1,1 @@
+﻿2026-05-06 10:31 - Logger-Modul gemaess Rule umgeschrieben: RotatingFileHandler (2MB, 10 Backups, append-only), benannter Projekt-Logger statt Root-Logger, idempotente Einrichtung, Pfad-Variante A neben dem Programm. Test mit altem Logger-Namen angepasst. Alle 13 Tests gruen, Ruff und Pyright sauber.
